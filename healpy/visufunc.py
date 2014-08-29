@@ -55,6 +55,7 @@ from . import projaxes as PA
 import numpy as np
 import matplotlib
 from . import pixelfunc
+from matplotlib.colorbar import ColorbarBase
 
 pi = np.pi
 dtor = pi/180.
@@ -65,9 +66,9 @@ def mollview(map=None,fig=None,rot=None,coord=None,unit='',
              remove_dip=False,remove_mono=False,
              gal_cut=0,
              format='%g',format2='%g',
-             cbar=True,cmap=None, notext=False,
-             norm=None,hold=False,margins=None,sub=None,
-             return_projected_map=False):
+             cbar=True,cbar_Nticks=2,cmap=None, notext=False,
+             norm=None,hold=False,margins=None,sub=None,add_scaled_cb=False,scaled_cb=1,unit2='',
+             return_projected_map=False,):
     """Plot an healpix map (given as an array) in Mollweide projection.
     
     Parameters
@@ -114,6 +115,8 @@ def mollview(map=None,fig=None,rot=None,coord=None,unit='',
       Format of the pixel value under mouse. Default: '%g'
     cbar : bool, optional
       Display the colorbar. Default: True
+    cbar_Nticks : int, optional
+      Number of ticks to be displayed and labeled on the colorbar. Default: 2
     notext : bool, optional
       If True, no text is printed around the map
     norm : {'hist', 'log', None}
@@ -140,6 +143,8 @@ def mollview(map=None,fig=None,rot=None,coord=None,unit='',
     """
     # Create the figure
     import pylab
+
+    cb2=None
     if not (hold or sub):
         f=pylab.figure(fig,figsize=(8.5,5.4))
         extent = (0.02,0.05,0.96,0.9)
@@ -196,16 +201,33 @@ def mollview(map=None,fig=None,rot=None,coord=None,unit='',
             im = ax.get_images()[0]
             b = im.norm.inverse(np.linspace(0,1,im.cmap.N+1))
             v = np.linspace(im.norm.vmin,im.norm.vmax,im.cmap.N)
+            if add_scaled_cb:
+              extra_pad=0.12
+            else:
+              extra_pad=0.05
             if matplotlib.__version__ >= '0.91.0':
                 cb=f.colorbar(im,ax=ax,
                               orientation='horizontal',
-                              shrink=0.5,aspect=25,ticks=PA.BoundaryLocator(),
-                              pad=0.05,fraction=0.1,boundaries=b,values=v,
+                              shrink=0.5,aspect=25,ticks=PA.BoundaryLocator(cbar_Nticks),
+                              pad=extra_pad,fraction=0.1,boundaries=b,values=v,
                               format=format)
+                if add_scaled_cb:
+                  cbax2=cb.ax.twiny()
+                  cb.ax.set_aspect(1.0/25, anchor=(0.5,1.0), adjustable='box-forced')
+                  cbax2.set_aspect(1.0/25, anchor=(0.5,1.0), adjustable='box-forced')
+                  cb2=ColorbarBase(cbax2, orientation='horizontal', 
+                                   ticks=PA.BoundaryLocator(cbar_Nticks), 
+                                   boundaries=b*scaled_cb,values=v*scaled_cb, filled=False,format=format)
+                  cb.config_axis()
+                  cb.draw_all()
+
+                  cb2.patch.remove()
+                  cb2.patch=None
+
             else:
                 # for older matplotlib versions, no ax kwarg
                 cb=f.colorbar(im,orientation='horizontal',
-                              shrink=0.5,aspect=25,ticks=PA.BoundaryLocator(),
+                              shrink=0.5,aspect=25,ticks=PA.BoundaryLocator(cbar_Nticks),
                               pad=0.05,fraction=0.1,boundaries=b,values=v,
                               format=format)
             cb.solids.set_rasterized(True)
@@ -214,8 +236,11 @@ def mollview(map=None,fig=None,rot=None,coord=None,unit='',
             ax.text(0.86,0.05,ax.proj.coordsysstr,fontsize=14,
                     fontweight='bold',transform=ax.transAxes)
         if cbar:
-            cb.ax.text(0.5,-1.0,unit,fontsize=14,
+            cb.ax.text(0.5,-2.0,unit,fontsize=14,
                        transform=cb.ax.transAxes,ha='center',va='center')
+        if cb2 != None:
+            cb2.ax.text(0.5,4.5,unit2,fontsize=14,
+                        transform=cb2.ax.transAxes,ha='center',va='center')
         f.sca(ax)
     finally:
         pylab.draw()

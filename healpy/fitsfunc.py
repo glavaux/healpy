@@ -28,6 +28,9 @@ from . import pixelfunc
 from .sphtfunc import Alm
 import warnings
 from .pixelfunc import UNSEEN
+from distutils.version import StrictVersion
+
+USE_PYFITS_3=(StrictVersion(pf.__version__) >= StrictVersion('3.0'))
 
 standard_column_names = {
     1 : "I_STOKES",
@@ -54,7 +57,10 @@ def read_cl(filename, dtype=np.float64, h=False):
       the cl array
     """
     hdulist=pf.open(filename)
-    cl = [hdulist[1].data.field(n) for n in range(len(hdulist[1].data.columns))]
+    if USE_PYFITS_3:
+      cl = [hdulist[1].data.field(n) for n in range(len(hdulist[1].data.columns))]
+    else: 
+      cl = [hdulist[1].data.field(n) for n in range(len(hdulist[1].get_coldefs()))]
     hdulist.close()
     if len(cl) == 1:
         return cl[0]
