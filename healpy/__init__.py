@@ -33,6 +33,7 @@ from .version import __version__
 
 from .pixelfunc import (ma, mask_good, mask_bad,
                        ang2pix, pix2ang,
+                       xyf2pix, pix2xyf,
                        pix2vec, vec2pix,
                        vec2ang, ang2vec,
                        nside2npix, npix2nside, 
@@ -95,6 +96,6 @@ except ImportError:
 try:
     from .fitsfunc import write_map,read_map,mrdfits,mwrfits,read_alm,write_alm,write_cl,read_cl
 except:
-    warnings.warn("Warning: Cannot import fits i/o tools (needs pyfits)",
+    warnings.warn("Warning: Cannot import fits i/o tools (needs astropy)",
                   category=ImportWarning)
 

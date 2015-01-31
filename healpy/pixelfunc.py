@@ -33,6 +33,8 @@ conversion from/to sky coordinates
 - :func:`vec2pix` converts 3-vector to pixel number 
 - :func:`vec2ang` converts 3-vector to angular coordinates
 - :func:`ang2vec` converts angular coordinates to unit 3-vector
+- :func:`pix2xyf` converts pixel number to coordinates within face
+- :func:`xyf2pix` converts coordinates within face to pixel number
 - :func:`get_neighbours` returns the 4 nearest pixels for given
   angular coordinates
 - :func:`get_all_neighbours` return the 8 nearest pixels for given
@@ -413,6 +415,86 @@ def pix2ang(nside,ipix,nest=False):
     else:
         return pixlib._pix2ang_ring(nside,ipix)
 
+def xyf2pix(nside,x,y,face,nest=False):
+    """xyf2pix : nside,x,y,face,nest=False -> ipix (default:RING)
+
+    Parameters
+    ----------
+    nside : int, scalar or array-like
+      The healpix nside parameter, must be a power of 2
+    x, y : int, scalars or array-like
+      Pixel indices within face
+    face : int, scalars or array-like
+      Face number
+    nest : bool, optional
+      if True, assume NESTED pixel ordering, otherwise, RING pixel ordering
+
+    Returns
+    -------
+    pix : int or array of int
+      The healpix pixel numbers. Scalar if all input are scalar, array otherwise.
+      Usual numpy broadcasting rules apply.
+
+    See Also
+    --------
+    pix2xyf
+
+    Examples
+    --------
+    >>> import healpy as hp
+    >>> hp.xyf2pix(16, 8, 8, 4)
+    1440
+
+    >>> hp.xyf2pix(16, [8, 8, 8, 15, 0], [8, 8, 7, 15, 0], [4, 0, 5, 0, 8])
+    array([1440,  427, 1520,    0, 3068])
+    """
+    check_nside(nside)
+    if nest:
+        return pixlib._xyf2pix_nest(nside,x,y,face)
+    else:
+        return pixlib._xyf2pix_ring(nside,x,y,face)
+
+def pix2xyf(nside,ipix,nest=False):
+    """pix2xyf : nside,ipix,nest=False -> x,y,face (default RING)
+
+    Parameters
+    ----------
+    nside : int or array-like
+      The healpix nside parameter, must be a power of 2
+    ipix : int or array-like
+      Pixel indices
+    nest : bool, optional
+      if True, assume NESTED pixel ordering, otherwise, RING pixel ordering
+
+    Returns
+    -------
+    x, y : int, scalars or array-like
+      Pixel indices within face
+    face : int, scalars or array-like
+      Face number
+
+    See Also
+    --------
+    xyf2pix
+
+    Examples
+    --------
+    >>> import healpy as hp
+    >>> hp.pix2xyf(16, 1440)
+    (8, 8, 4)
+
+    >>> hp.pix2xyf(16, [1440,  427, 1520,    0, 3068])
+    (array([ 8,  8,  8, 15,  0]), array([ 8,  8,  7, 15,  0]), array([4, 0, 5, 0, 8]))
+
+    >>> hp.pix2xyf([1, 2, 4, 8], 11)
+    (array([0, 1, 3, 7]), array([0, 0, 2, 6]), array([11,  3,  3,  3]))
+    """
+    check_nside(nside)
+    if nest:
+        return pixlib._pix2xyf_nest(nside, ipix)
+    else:
+        return pixlib._pix2xyf_ring(nside,ipix)
+
 def vec2pix(nside,x,y,z,nest=False):
     """vec2pix : nside,x,y,z,nest=False -> ipix (default:RING)
 
@@ -677,7 +759,7 @@ def reorder(map_in, inp=None, out=None, r2n=None, n2r=None):
         npix = len(map_in[0])
     nside = npix2nside(npix)
     if nside>128:
-        bunchsize = npix/24
+        bunchsize = npix//24
     else:
         bunchsize = npix
     if r2n:
@@ -1147,7 +1229,7 @@ def fit_dipole(m, nest=False, bad=UNSEEN, gal_cut=0):
     npix = m.size
     nside = npix2nside(npix)
     if nside>128:
-        bunchsize = npix/24
+        bunchsize = npix//24
     else:
         bunchsize = npix
     aa = np.zeros((4,4),dtype=np.float64)
@@ -1227,7 +1309,7 @@ def remove_dipole(m,nest=False,bad=UNSEEN,gal_cut=0,fitval=False,
     npix = m.size
     nside = npix2nside(npix)
     if nside>128:
-        bunchsize = npix/24
+        bunchsize = npix//24
     else:
         bunchsize = npix
     mono,dipole = fit_dipole(m,nest=nest,bad=bad,gal_cut=gal_cut)
@@ -1241,7 +1323,7 @@ def remove_dipole(m,nest=False,bad=UNSEEN,gal_cut=0,fitval=False,
         m.flat[ipix] -= dipole[2]*z
         m.flat[ipix] -= mono
     if verbose:
-        import rotator as R
+        from . import rotator as R
         lon,lat = R.vec2dir(dipole,lonlat=True)
         amp = np.sqrt((dipole**2).sum())
         print(
@@ -1282,7 +1364,7 @@ def fit_monopole(m,nest=False,bad=pixlib.UNSEEN,gal_cut=0):
     npix=m.size
     nside = npix2nside(npix)
     if nside>128:
-        bunchsize=npix/24
+        bunchsize=npix//24
     else:
         bunchsize=npix
     aa = v = 0.0
@@ -1340,7 +1422,7 @@ def remove_monopole(m,nest=False,bad=pixlib.UNSEEN,gal_cut=0,fitval=False,
     npix = m.size
     nside = npix2nside(npix)
     if nside>128:
-        bunchsize = npix/24
+        bunchsize = npix//24
     else:
         bunchsize = npix
     mono = fit_monopole(m,nest=nest,bad=bad,gal_cut=gal_cut)

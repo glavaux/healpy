@@ -1,3 +1,16 @@
+Release 1.8.4, 16 Jan 2015
+
+* Fixed another permission issue on install-sh
+
+Release 1.8.3, 16 Jan 2015
+
+* Fix permission issue in the release tarball <https://github.com/healpy/healpy/issues/220>
+
+Release 1.8.2, 13 Jan 2015
+
+* Several fixes in the build process
+* Support for `astropy.fits` <https://github.com/healpy/healpy/pull/213>
+
 Release 1.8.1, 22 Jun 2014 
 
 * Added `common.pxd` to source tarball
