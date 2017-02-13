@@ -1,3 +1,30 @@
+Release 1.10.1, 8 Nov 2016
+
+* Removed support for Python 2.6
+* Implemented Lambert azimuthal equal-area projection <https://github.com/healpy/healpy/pull/354>
+* Bugfix: write multiple alms <https://github.com/healpy/healpy/pull/342>
+* Depend on `astropy` instead of `pyfits` <https://github.com/healpy/healpy/pull/337>
+
+Release 1.9.1, 17 Nov 2015, Last version to support Python 2.6
+
+* Remove C++ 11 features <https://github.com/healpy/healpy/pull/297>
+* Streamlined setup.py <https://github.com/healpy/healpy/pull/298>
+* Plotting fixes for Python 3 <https://github.com/healpy/healpy/pull/303>, <https://github.com/healpy/healpy/pull/304>
+* Numpy 1.10 fix <https://github.com/healpy/healpy/pull/305>
+
+Release 1.9.0, 17 Sep 2015
+
+* updated healpix CXX to 786 (trunk) <https://github.com/healpy/healpy/pull/280>
+* drop support for Python 2.6 <https://github.com/healpy/healpy/pull/268>
+* option to read all fields with `read_map` <https://github.com/healpy/healpy/pull/258>
+* `write_map` and `read_map` support for partial sky maps <https://github.com/healpy/healpy/pull/254>
+* Allow `read_map` to also take an HDUList or HDU instance <https://github.com/healpy/healpy/issues/249>
+
+Release 1.8.6, 23 Apr 2015
+
+* Renamed `get_neighbours` to `get_interp_weights` <https://github.com/healpy/healpy/issues/240>
+* Updated HEALPix C++ to fix bug in `query_disc` <https://github.com/healpy/healpy/issues/229>
+
 Release 1.8.4, 16 Jan 2015
 
 * Fixed another permission issue on install-sh

@@ -5,15 +5,23 @@ Requirements
 ------------
 
 Healpy depends on the HEALPix C++ and cfitsio C libraries. Source code for both
-is include with Healpy and is built automatically, so you do not need to
+is included with Healpy and is built automatically, so you do not need to
 install them yourself.
+Only Linux and MAC OS X are supported, not Windows.
 
-Quick installation with Pip
+Binary installation with conda
+-----------------------
+
+The `OpenAstronomy <https://github.com/OpenAstronomy>`_ collaboration provides a `conda
+channel <https://anaconda.org/openastronomy/repo>`_ with a pre-compiled version of ``healpy``
+for linux 64bit and MAC OS X platforms, you can install it in Anaconda with:
+
+    conda install -c openastronomy healpy
+
+Source installation with Pip
 ---------------------------
 
-The quickest way to install Healpy is with `pip <http://www.pip-installer.org>`_
-(>= 1.4.2), which automatically fetches the latest version of Healpy and any
-missing dependencies::
+It is possible to build the latest ``healpy`` with `pip <http://www.pip-installer.org>`_ ::
 
     pip install --user healpy
 
@@ -22,7 +30,7 @@ by upgrading from time to time::
 
     pip install --user --upgrade healpy
 
-Even quicker installation on Mac OS with MacPorts
+Installation on Mac OS with MacPorts
 -------------------------------------------------
 
 If you are using a Mac and have the `MacPorts <https://www.macports.org>`_
@@ -90,21 +98,6 @@ environment variable settings are necessary, and you do not need to set
 
 Then, unpack each of the above packages and build them with the usual
 ``configure; make; make install`` recipe.
-
-Known issues
-------------
-
-* Incompatibility with ``cfitisio`` from ``HEASOFT``: due to a conflict of
-  header file names it is currently not possible to use the cfitsio library
-  provided with the HEASOFT package for compilation of Healpix C++. HEASOFT's
-  include directory contains a file called "rotmatrix.h" which clashes with
-  Healpix's own rotmatrix.h.
-
-* Compilation problems in the C++ package: some gcc versions (we have reports
-  for 4.4.5 and 4.4.6) crash with an internal compiler error during compilation
-  of libsharp. Unfortunately we have not found a workaround for this compiler
-  problem. To our knowledge, it has been fixed in gcc 4.4.7 and in the 4.5.x
-  and newer versions.
 
 Development install
 -------------------

@@ -21,14 +21,16 @@ from . import projector as P
 from . import rotator as R
 from . import pixelfunc
 import matplotlib
-from matplotlib import axes,ticker,colors,cm,lines,cbook,figure
+import matplotlib.axes
 import numpy as np
+import six
+
 from ._healpy_pixel_lib import UNSEEN
 
 pi = np.pi
 dtor = pi/180.
 
-class SphericalProjAxes(axes.Axes):
+class SphericalProjAxes(matplotlib.axes.Axes):
     """Define a special Axes to take care of spherical projection.
 
     Parameters
@@ -255,13 +257,13 @@ class SphericalProjAxes(axes.Axes):
         for xx,yy in zip(x,y):
             if fmt is not None:
                 try: # works in matplotlib 1.3 and earlier
-                    linestyle, marker, color = axes._process_plot_format(fmt)
+                    linestyle, marker, color = matplotlib.axes._process_plot_format(fmt)
                 except: # matplotlib 1.4 and later
-                    linestyle, marker, color = axes._axes._process_plot_format(fmt)
+                    linestyle, marker, color = matplotlib.axes._axes._process_plot_format(fmt)
                 kwds.setdefault('linestyle',linestyle)
                 kwds.setdefault('marker',marker)
                 if color is not None: kwds.setdefault('color',color)
-            l = lines.Line2D(xx,yy,**kwds)
+            l = matplotlib.lines.Line2D(xx,yy,**kwds)
             self.add_line(l)
             thelines.append(l)
         return thelines
@@ -394,7 +396,7 @@ class SphericalProjAxes(axes.Axes):
         elif len(w) >= 2:
             xx.append(x[0:w[0]])
             yy.append(y[0:w[0]])
-            for i in xrange(len(w)-1):
+            for i in six.moves.xrange(len(w)-1):
                 xx.append(x[w[i]:w[i+1]])
                 yy.append(y[w[i]:w[i+1]])
             xx.append(x[w[-1]:])
@@ -702,14 +704,62 @@ class HpxOrthographicAxes(OrthographicAxes):
         f = lambda x,y,z: pixelfunc.vec2pix(nside,x,y,z,nest=nest)
         return super(HpxOrthographicAxes,self).projmap(map,f,**kwds)
 
+class AzimuthalAxes(SphericalProjAxes):
+    """Define an Azimuthal Axes to handle azimuthal equidistant or
+       Lambert azimuthal equal-area projections.
+
+    Input:
+      - rot=, coord= : define rotation and coordinate system. See rotator.
+      - coordprec= : number of digit after floating point for coordinates display.
+      - format= : format string for value display.
+
+      Other keywords from Axes (see Axes).
+    """
+    def __init__(self,*args,**kwds):
+        kwds.setdefault('coordprec',3)
+        super(AzimuthalAxes,self).__init__(P.AzimuthalProj, *args,**kwds)
+        self._do_border = False
+
+    def projmap(self,map,vec2pix_func,xsize=200,ysize=None,reso=1.5,lamb=True,half_sky=False,**kwds):
+        self.proj.set_proj_plane_info(xsize=xsize,ysize=ysize,reso=reso,lamb=lamb,half_sky=half_sky)
+        return super(AzimuthalAxes,self).projmap(map,vec2pix_func,**kwds)
+
+class HpxAzimuthalAxes(AzimuthalAxes):
+    def projmap(self,map,nest=False,**kwds):
+        nside = pixelfunc.npix2nside(pixelfunc.get_map_size(map))
+        f = lambda x,y,z: pixelfunc.vec2pix(nside,x,y,z,nest=nest)
+        xsize = kwds.pop('xsize',800)
+        ysize = kwds.pop('ysize',None)
+        reso = kwds.pop('reso',1.5)
+        lamb = kwds.pop('lamb',True)
+        return super(HpxAzimuthalAxes,self).projmap(map,f,xsize=xsize,
+                                            ysize=ysize,reso=reso,lamb=lamb,**kwds)
 
 ###################################################################
 #
-#   Table color for mollview and gnomview, ...
+#   Table color for mollview, gnomview, and orthview.
+#   Currently defined for so that the default colormap, found in 
+#   matplotlib.rcParams['image.cmap'], the data is displayed with
+#   values greater than vmax as the final element of the colormap,
+#   masked indices gray, and the background set to white.
+#
+#   With matplotlib.rcParams['image.cmap'] assigned to a string
+#   corresponding to a standard matplotlib colormap, one can call
+#   hp.mollview(m) and have the map projected in the standard way,
+#   whereas using just, e.g., hp.mollview(m, cmap='jet') will display
+#   the data with a non-white background.
+#
+#   One can set the default colormap in the matplotlibrc file, or set
+#   it in situ:
+#   >>> matplotlib.rcParam['image.cmap'] = 'coolwarm'
+#   >>> hp.mollview(m)
+#   Note that custom colormaps can also be used, but they need to be 
+#   registered ahead fo time, as shown in
+#   http://matplotlib.org/examples/pylab_examples/custom_cmap.html
 
 def get_color_table(vmin,vmax,val,cmap=None,norm=None):
     # Create color table
-    newjet = create_colormap(cmap)
+    newcmap = create_colormap(cmap)
     if type(norm) is str:
         if norm.lower().startswith('log'):
             norm = LogNorm2(clip=False)
@@ -724,14 +774,17 @@ def get_color_table(vmin,vmax,val,cmap=None,norm=None):
     norm.vmax = vmax
     norm.autoscale_None(val)
     
-    return newjet,norm
+    return newcmap,norm
 
 def create_colormap(cmap):
     if cmap is not None:
         return cmap 
-    cmap0 = cm.jet
-    newcm = colors.LinearSegmentedColormap('newcm',cmap0._segmentdata,
-                                               cmap0.N)
+    cmap0 = matplotlib.cm.get_cmap(matplotlib.rcParams['image.cmap'])
+    if hasattr(cmap0, '_segmentdata'):
+        newcm = matplotlib.colors.LinearSegmentedColormap('newcm',cmap0._segmentdata,
+                                                    cmap0.N)
+    else:
+        newcm = cmap0
     newcm.set_over(newcm(1.0))
     newcm.set_under('w')
     newcm.set_bad('gray')
@@ -741,7 +794,7 @@ def create_colormap(cmap):
 #
 #   A Locator that gives the bounds of the interval
 #
-class BoundaryLocator(ticker.Locator):
+class BoundaryLocator(matplotlib.ticker.Locator):
     def __init__(self,N=2):
         if N < 2:
             raise ValueError("Number of locs must be greater than 1")
@@ -772,9 +825,9 @@ class BoundaryLocator(ticker.Locator):
 #   the histogram of data
 #
 
-class HistEqNorm(colors.Normalize):
+class HistEqNorm(matplotlib.colors.Normalize):
     def __init__(self, vmin=None, vmax=None, clip=False):
-        colors.Normalize.__init__(self,vmin,vmax,clip)
+        matplotlib.colors.Normalize.__init__(self,vmin,vmax,clip)
         self.xval = None
         self.yval = None
 
@@ -782,7 +835,7 @@ class HistEqNorm(colors.Normalize):
         if clip is None:
             clip = self.clip
 
-        if cbook.iterable(value):
+        if matplotlib.cbook.iterable(value):
             vtype = 'array'
             val = np.ma.asarray(value).astype(np.float)
         else:
@@ -812,7 +865,7 @@ class HistEqNorm(colors.Normalize):
         if not self.scaled():
             raise ValueError("Not invertible until scaled")
 
-        if cbook.iterable(value):
+        if matplotlib.cbook.iterable(value):
             vtype='array'
             val = np.ma.array(value)
         else:
@@ -847,7 +900,7 @@ class HistEqNorm(colors.Normalize):
         if data.mask is not np.ma.nomask:
             w = w|data.mask
         data2 = data.data[~w]
-        bins = long(min(data2.size/20, 5000))
+        bins = min(data2.size//20, 5000)
         if bins < 3: bins=data2.size
         try:
             # for numpy 1.1, use new bins format (left and right edges)
@@ -898,7 +951,7 @@ class HistEqNorm(colors.Normalize):
 #   A normalization class to get logarithmic color table
 #
 
-class LogNorm2(colors.Normalize):
+class LogNorm2(matplotlib.colors.Normalize):
     """
     Normalize a given value to the 0-1 range on a log scale
     """
@@ -906,7 +959,7 @@ class LogNorm2(colors.Normalize):
         if clip is None:
             clip = self.clip
 
-        if cbook.iterable(value):
+        if matplotlib.cbook.iterable(value):
             vtype = 'array'
             val = np.ma.asarray(value).astype(np.float)
         else:
@@ -942,14 +995,14 @@ class LogNorm2(colors.Normalize):
         ' autoscale only None-valued vmin or vmax'
         if self.vmin is None or self.vmax is None:
             val = np.ma.masked_where(np.isinf(A.data),A)
-            colors.Normalize.autoscale_None(self,val)
+            matplotlib.colors.Normalize.autoscale_None(self,val)
 
     def inverse(self, value):
         if not self.scaled():
             raise ValueError("Not invertible until scaled")
         vmin, vmax = float(self.vmin), float(self.vmax)
 
-        if cbook.iterable(value):
+        if matplotlib.cbook.iterable(value):
             val = np.ma.asarray(value)
             return vmin * np.ma.power((vmax/vmin), val)
         else:
@@ -963,7 +1016,7 @@ class LogNorm2(colors.Normalize):
 #   A normalization class to get linear color table
 #
 
-class LinNorm2(colors.Normalize):
+class LinNorm2(matplotlib.colors.Normalize):
     """
     Normalize a given value to the 0-1 range on a lin scale
     """
@@ -971,7 +1024,7 @@ class LinNorm2(colors.Normalize):
         if clip is None:
             clip = self.clip
 
-        if cbook.iterable(value):
+        if matplotlib.cbook.iterable(value):
             vtype = 'array'
             val = np.ma.asarray(value).astype(np.float)
         else:
@@ -1006,14 +1059,14 @@ class LinNorm2(colors.Normalize):
         ' autoscale only None-valued vmin or vmax'
         if self.vmin is None or self.vmax is None:
             val = np.ma.masked_where(np.isinf(A.data),A)
-            colors.Normalize.autoscale_None(self,val)
+            matplotlib.colors.Normalize.autoscale_None(self,val)
 
     def inverse(self, value):
         if not self.scaled():
             raise ValueError("Not invertible until scaled")
         vmin, vmax = float(self.vmin), float(self.vmax)
 
-        if cbook.iterable(value):
+        if matplotlib.cbook.iterable(value):
             val = np.ma.asarray(value)
             return vmin + (vmax-vmin) * val
         else:

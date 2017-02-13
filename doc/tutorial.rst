@@ -6,6 +6,19 @@ Creating and manipulating maps
 
 Maps are simply numpy arrays, where each array element refers to a location in the sky as defined by the Healpix pixelization schemes (see the `healpix website`_).
 
+Note: Running the code below in a regular Python session will not display the maps; it's recommended to use IPython:
+
+.. code-block:: bash
+
+    % ipython
+
+...then select the appropriate backend display:
+
+>>> %matplotlib inline # for IPython notebook
+>>> %matplotlib qt     # using Qt (e.g. Windows)
+>>> %matplotlib osx    # on Macs
+>>> %matplotlib gtk    # GTK
+
 The resolution of the map is defined by the *NSIDE* parameter. The :py:func:`~healpy.pixelfunc.nside2npix` function gives the number of pixel *NPIX* of the map:
 
 >>> import numpy as np
@@ -108,5 +121,5 @@ therefore we can plot a normalized CMB spectrum and write it to disk:
 
 Gaussian beam map smoothing is provided by :py:func:`~healpy.sphtfunc.smoothing`:
 
->>> wmap_map_I_smoothed = hp.smoothing(wmap_map_I, fwhm=60, arcmin=True)
+>>> wmap_map_I_smoothed = hp.smoothing(wmap_map_I, fwhm=np.radians(1.))
 >>> hp.mollview(wmap_map_I_smoothed, min=-1, max=1, title='Map smoothed 1 deg')

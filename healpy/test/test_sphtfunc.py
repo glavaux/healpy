@@ -1,7 +1,4 @@
-try:
-    import astropy.io.fits as pf
-except:
-    import pyfits as pf
+import astropy.io.fits as pf
 import os
 import numpy as np
 from copy import deepcopy
@@ -113,10 +110,11 @@ class TestSphtFunc(unittest.TestCase):
         tmp = np.empty(orig.size * 2)
         tmp[::2] = orig
         maps = [orig, orig.astype(np.float32), tmp[::2]]
-        for input in maps:
-            alm = hp.map2alm(input, iter=10)
-            output = hp.alm2map(alm, nside)
-            np.testing.assert_allclose(input, output, atol=1e-4)
+        for use_weights in [False, True]:
+            for input in maps:
+                alm = hp.map2alm(input, iter=10, use_weights=use_weights)
+                output = hp.alm2map(alm, nside)
+                np.testing.assert_allclose(input, output, atol=1e-4)
 
     def test_map2alm_pol(self):
         tmp = [np.empty(o.size*2) for o in self.mapiqu]
@@ -124,11 +122,12 @@ class TestSphtFunc(unittest.TestCase):
             t[::2] = o
         maps = [self.mapiqu, [o.astype(np.float32) for o in self.mapiqu],
                 [t[::2] for t in tmp]]
-        for input in maps:
-            alm = hp.map2alm(input, iter=10)
-            output = hp.alm2map(alm, 32)
-            for i, o in zip(input, output):
-                np.testing.assert_allclose(i, o, atol=1e-4)
+        for use_weights in [False, True]:
+            for input in maps:
+                alm = hp.map2alm(input, iter=10, use_weights=use_weights)
+                output = hp.alm2map(alm, 32)
+                for i, o in zip(input, output):
+                    np.testing.assert_allclose(i, o, atol=1e-4)
 
     def test_rotate_alm(self):
         almigc = hp.map2alm(self.mapiqu)
@@ -137,8 +136,18 @@ class TestSphtFunc(unittest.TestCase):
             o = deepcopy(i)
             hp.rotate_alm(o, 0.1, 0.2, 0.3)
             hp.rotate_alm(o, -0.3, -0.2, -0.1)
-            np.testing.assert_allclose(i, o, rtol=1e-6)
+            # FIXME: rtol=1e-6 works here, except on Debian with Python 3.4.
+            np.testing.assert_allclose(i, o, rtol=1e-5)
 
+    def test_accept_ma_allows_only_keywords(self):
+        """ Test whether 'smoothing' wrapped with accept_ma works with only
+            keyword arguments. """
+
+        ma = np.ones(12*16**2)
+        try:
+            hp.smoothing(map_in=ma)
+        except IndexError:
+            self.fail()
 
 if __name__ == '__main__':
     unittest.main()

@@ -19,7 +19,7 @@ Installation
 
 .. toctree::
    :maxdepth: 1
-   
+
    install
 
 Reference
@@ -32,12 +32,11 @@ Reference
    healpy_spht
    healpy_visu
    healpy_fits
+   healpy_query
 
    healpy_rotator
    healpy_projector
-   healpy_projaxes
    healpy_zoomtool
-
 
 Indices and tables
 ==================
@@ -46,3 +45,10 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+License
+-------
+
+.. toctree::
+   :maxdepth: 1
+
+   license

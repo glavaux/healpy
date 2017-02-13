@@ -11,45 +11,7 @@
 # All configuration values have a default value; values that are commented out
 # serve to show the default value.
 
-import sys, os, exceptions
-
-# To avoid problem with ReadTheDocs and compiled extensions.
-class Mock(object):
-    """Special Healpix values for masked pixels.
-    """
-    pi = 3.141516
-    class Axes(object):
-        pass
-    class Locator(object):
-        pass
-    class Normalize(object):
-        pass
-    def __init__(self, *args):
-        """Mock init
-        """
-        pass
-
-    def __getattr__(self, name):
-        return Mock
-
-    def __div__(self, x):
-        return Mock()
-
-    def __getitem__(self, idx):
-        return str(Mock())
-
-try:
-    import healpy
-except exceptions.ImportError:
-    MOCK_MODULES = ['matplotlib', 'pylab', 'matplotlib.colors',
-                    'matplotlib.cbook', 'pyfits',
-                    'numpy', '_healpy_pixel_lib',
-                    '_healpy_sph_transform_lib', '_healpy_fitsio_lib', '_sphtools',
-                    'healpy._sphtools']
-
-    for mod_name in MOCK_MODULES:
-        sys.modules[mod_name] = Mock()
-    
+import sys, os
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
@@ -75,7 +37,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = u'healpy'
-copyright = u'2008, C. Rosset'
+copyright = u'CC/BY/4.0/International'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -205,7 +167,7 @@ htmlhelp_basename = 'healpydoc'
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
   ('index', 'healpy.tex', u'healpy Documentation',
-   u'C. Rosset', 'manual'),
+   u'', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

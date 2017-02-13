@@ -17,8 +17,9 @@ conversion from/to sky coordinates
    vec2pix
    vec2ang
    ang2vec
-   get_neighbours
    get_all_neighbours
+   get_interp_weights
+   get_interp_val
 
 conversion between NESTED and RING schemes
 ------------------------------------------
@@ -36,6 +37,8 @@ nside/npix/resolution
 
    nside2npix
    npix2nside
+   nside2order
+   order2nside
    nside2resol
    nside2pixarea
    max_pixrad

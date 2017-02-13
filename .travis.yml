@@ -5,10 +5,10 @@
 language: python
 
 python:
-  - 2.6
   - 2.7
   - 3.3
   - 3.4
+  - 3.5
 
 env:
   - USE_ANACONDA=false USE_PIP=false USE_EXTERNAL_CFITSIO=false
@@ -27,14 +27,6 @@ env:
 
 matrix:
   exclude:
-    - python: 2.6
-      env: USE_ANACONDA=false USE_PIP=false USE_EXTERNAL_CFITSIO=false
-    - python: 2.6
-      env: USE_ANACONDA=false USE_PIP=true  USE_EXTERNAL_CFITSIO=false
-    - python: 2.6
-      env: USE_ANACONDA=true  USE_PIP=false USE_EXTERNAL_CFITSIO=false
-    - python: 2.6
-      env: USE_ANACONDA=true  USE_PIP=true  USE_EXTERNAL_CFITSIO=false
     - python: 3.3
       env: USE_ANACONDA=false USE_PIP=false USE_EXTERNAL_CFITSIO=false
     - python: 3.3
@@ -51,8 +43,17 @@ matrix:
       env: USE_ANACONDA=false USE_PIP=true  USE_EXTERNAL_CFITSIO=false
     - python: 3.4
       env: USE_ANACONDA=false USE_PIP=true  USE_EXTERNAL_CFITSIO=true
+    - python: 3.5
+      env: USE_ANACONDA=false USE_PIP=false USE_EXTERNAL_CFITSIO=false
+    - python: 3.5
+      env: USE_ANACONDA=false USE_PIP=false USE_EXTERNAL_CFITSIO=true
+    - python: 3.5
+      env: USE_ANACONDA=false USE_PIP=true  USE_EXTERNAL_CFITSIO=false
+    - python: 3.5
+      env: USE_ANACONDA=false USE_PIP=true  USE_EXTERNAL_CFITSIO=true
 
 before_install:
+  - sudo apt-get -qq update
   # Use Matplotlib backend appropriate for headless rendering
   - |
     mkdir -p $HOME/.config/matplotlib && \
@@ -63,16 +64,15 @@ before_install:
     if $USE_ANACONDA; then
       travis_retry wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh \
         -O miniconda.sh && \
-      bash miniconda.sh -b && \
+      bash miniconda.sh -b -p ~/miniconda && \
       ~/miniconda/bin/conda create --yes -n anaconda_env \
         python=$TRAVIS_PYTHON_VERSION \
-        setuptools pip numpy matplotlib && \
-      source ~/miniconda/bin/activate anaconda_env && \
-      travis_retry pip install pyfits cython pytest
+        setuptools pip numpy matplotlib astropy cython pytest && \
+      source ~/miniconda/bin/activate anaconda_env
     else
      sudo apt-get -y install pkg-config && \
      travis_retry pip install --upgrade setuptools && \
-     travis_retry pip install numpy matplotlib pyfits cython pytest
+     travis_retry pip install numpy matplotlib astropy cython pytest
     fi
 
   # Install cfitsio if necessary
@@ -86,8 +86,12 @@ install:
   - |
     if $USE_PIP; then
       python setup.py build && \
-      python setup.py sdist && \
-      pip uninstall -y cython && \
+      python setup.py sdist
+      if $USE_ANACONDA; then
+        conda uninstall -y cython
+      else
+        pip uninstall -y cython
+      fi
       sudo apt-get -y remove autoconf automake pkg-config && \
       pip install dist/*.tar.gz
     else
