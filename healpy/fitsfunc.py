@@ -21,8 +21,10 @@
 """
 try:
     import astropy.io.fits as pf
+    USE_PYFITS_3=False
 except ImportError:
     import pyfits as pf
+    USE_PYFITS_3=(StrictVersion(pf.__version__) >= StrictVersion('3.0'))
 import numpy as np
 from . import pixelfunc
 from .sphtfunc import Alm
@@ -30,7 +32,6 @@ import warnings
 from .pixelfunc import UNSEEN
 from distutils.version import StrictVersion
 
-USE_PYFITS_3=(StrictVersion(pf.__version__) >= StrictVersion('3.0'))
 
 standard_column_names = {
     1 : "I_STOKES",
