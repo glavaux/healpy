@@ -69,7 +69,7 @@ def mollview(map=None,fig=None,rot=None,coord=None,unit='',
              format='%g',format2='%g',
              cbar=True,cbar_Nticks=2,cmap=None, notext=False,
              norm=None,hold=False,margins=None,sub=None,add_scaled_cb=False,scaled_cb=1,unit2='',
-             return_projected_map=False,):
+             return_projected_map=False):
     """Plot an healpix map (given as an array) in Mollweide projection.
     
     Parameters

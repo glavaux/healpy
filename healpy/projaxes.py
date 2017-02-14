@@ -153,8 +153,8 @@ class SphericalProjAxes(matplotlib.axes.Axes):
         -----
         Other keywords are transmitted to :func:`matplotlib.Axes.imshow`
         """
-        img = self.proj.projmap(map,vec2pix_func,rot=rot,coord=coord)
-        w = ~( np.isnan(img) | 
+        img,imgmask = self.proj.projmap(map,vec2pix_func,rot=rot,coord=coord, ret_imgmask=True)
+        w = ~( imgmask | np.isnan(img) | 
                np.isinf(img) | 
                pixelfunc.mask_bad(img, badval = badval) )
         try:
@@ -173,13 +173,14 @@ class SphericalProjAxes(matplotlib.axes.Axes):
         cm,nn = get_color_table(vmin,vmax,img[w],cmap=cmap,norm=norm)
         ext = self.proj.get_extent()
         img = np.ma.masked_values(img, badval)
+        img.mask = np.ma.getmaskarray(img)+imgmask[:,:]
         aximg = self.imshow(img,extent = ext,cmap=cm,norm=nn,
                             interpolation='nearest',origin='lower',
                             vmin=vmin,vmax=vmax,**kwds)
         xmin,xmax,ymin,ymax = self.proj.get_extent()
         self.set_xlim(xmin,xmax)
         self.set_ylim(ymin,ymax)
-        return img
+        return img,imgmask
 
     def projplot(self,*args,**kwds):
         """projplot is a wrapper around :func:`matplotlib.Axes.plot` to take into account the
@@ -1031,7 +1032,7 @@ class LinNorm2(matplotlib.colors.Normalize):
             vtype = 'scalar'
             val = np.ma.array([value]).astype(np.float)
 
-        winf = np.isinf(val.data)
+        winf = np.isinf(val.data) & (val.mask==False)
         val = np.ma.masked_where(winf,val)
 
         self.autoscale_None(val)

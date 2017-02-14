@@ -155,7 +155,7 @@ class SphericalProj(object):
         """
         pass
 
-    def projmap(self, map, vec2pix_func,rot=None,coord=None):
+    def projmap(self, map, vec2pix_func,rot=None,coord=None,ret_imgmask=False):
         """Create an array containing the projection of the map.
 
         Input:
@@ -174,8 +174,12 @@ class SphericalProj(object):
             matype = np.ma.array
         if type(x) is matype and x.mask is not np.ma.nomask:
             w = (x.mask == False)
+            wnot = w==False
         else:
             w = slice(None)
+            wnot = np.empty(x.shape,dtype=bool)
+            wnot[:] = False
+
         img=np.zeros(x.shape,np.float64)-np.inf
         vec = self.xy2vec(np.asarray(x[w]),np.asarray(y[w]))
         vec = (R.Rotator(rot=rot,coord=self.mkcoord(coord))).I(vec)
@@ -196,7 +200,11 @@ class SphericalProj(object):
         else:
             mpix = map[pix]
         img[w] = mpix
-        return img
+        if not ret_imgmask:
+          return img
+        else:
+          print wnot
+          return img, wnot 
         
     def set_flip(self, flipconv):
         """flipconv is either 'astro' or 'geo'. None will be default.
